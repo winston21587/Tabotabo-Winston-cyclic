@@ -1,19 +1,27 @@
 #include <iostream>
-#include <vector>
-#include <stack>
 #include <algorithm>
 using namespace std;
 
-bool dfs(int node, vector<vector<int>>& adj, vector<bool>& visited,
-         vector<bool>& recStack, vector<int>& parent, int& cycle_end) {
+const int N = 3; // Number of nodes (adjustable)
+int adj[N][N] = {
+    {0, 1, 0},
+    {0, 0, 1},
+    {1, 0, 0} // 0 → 1 → 2 → 0 (cycle)
+};
+
+bool visited[N];
+bool recStack[N];
+int parent[N];
+
+bool dfs(int node, int& cycle_end) {
     visited[node] = true;
     recStack[node] = true;
 
-    for (int neighbor = 0; neighbor < adj.size(); neighbor++) {
+    for (int neighbor = 0; neighbor < N; neighbor++) {
         if (adj[node][neighbor]) {
             if (!visited[neighbor]) {
                 parent[neighbor] = node;
-                if (dfs(neighbor, adj, visited, recStack, parent, cycle_end))
+                if (dfs(neighbor, cycle_end))
                     return true;
             } else if (recStack[neighbor]) {
                 parent[neighbor] = node;
@@ -27,41 +35,35 @@ bool dfs(int node, vector<vector<int>>& adj, vector<bool>& visited,
     return false;
 }
 
-void printCycleDFS(vector<int>& parent, int start) {
-    vector<int> cycle;
-    int current = parent[start];
-    cycle.push_back(start);
+void printCycle(int start) {
+    int cycle[N], idx = 0;
+    cycle[idx++] = start;
 
-    while (current != start) {
-        cycle.push_back(current);
+    int current = parent[start];
+    while (current != start && idx < N) {
+        cycle[idx++] = current;
         current = parent[current];
     }
-    cycle.push_back(start);
+    cycle[idx++] = start;
 
-    reverse(cycle.begin(), cycle.end());
+    reverse(cycle, cycle + idx);
     cout << "Cycle found (DFS): ";
-    for (int node : cycle)
-        cout << node << " ";
+    for (int i = 0; i < idx; i++)
+        cout << cycle[i] << " ";
     cout << endl;
 }
 
 int main() {
-    vector<vector<int>> adj = {
-        {0, 1, 0},
-        {0, 0, 1},
-        {1, 0, 0}  // 0 → 1 → 2 → 0 (cycle)
-    };
+    fill(visited, visited + N, false);
+    fill(recStack, recStack + N, false);
+    fill(parent, parent + N, -1);
 
-    int n = adj.size();
-    vector<bool> visited(n, false);
-    vector<bool> recStack(n, false);
-    vector<int> parent(n, -1);
     int cycle_end = -1;
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < N; i++) {
         if (!visited[i]) {
-            if (dfs(i, adj, visited, recStack, parent, cycle_end)) {
-                printCycleDFS(parent, cycle_end);
+            if (dfs(i, cycle_end)) {
+                printCycle(cycle_end);
                 return 0;
             }
         }
